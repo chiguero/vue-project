@@ -46,7 +46,7 @@
                 <span class="stat-label">Plantas</span>
               </div>
               <div class="stat-item">
-                <span class="stat-number">15</span>
+                <span class="stat-number">14</span>
                 <span class="stat-label">Espacios</span>
               </div>
               <div class="stat-item">
