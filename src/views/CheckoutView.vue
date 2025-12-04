@@ -79,7 +79,7 @@
               
               <div class="form-row">
                 <div class="form-group">
-                  <label for="fecha-inicio">Fecha de inicio *</label>
+                  <label for="fecha-inicio">Fecha *</label>
                   <input 
                     type="date" 
                     id="fecha-inicio" 
@@ -88,14 +88,39 @@
                     :min="minDate"
                   />
                 </div>
-                <div class="form-group">
-                  <label for="duracion">Duración *</label>
-                  <select id="duracion" v-model="formData.duracion" required>
-                    <option value="1-mes">1 mes</option>
-                    <option value="3-meses">3 meses</option>
-                    <option value="6-meses">6 meses (-5%)</option>
-                    <option value="12-meses">12 meses (-10%)</option>
-                  </select>
+              </div>
+
+              <!-- Selector de Horas -->
+              <div class="hours-selector">
+                <label class="hours-label">
+                  Selecciona las horas que necesitas * 
+                  <span v-if="formData.fechaInicio" class="schedule-info">({{ scheduleMessage }})</span>
+                </label>
+                <div v-if="!formData.fechaInicio" class="hours-hint">
+                  <p>📅 Por favor, selecciona primero una fecha para ver las horas disponibles</p>
+                </div>
+                <div v-else class="hours-grid">
+                  <div 
+                    v-for="hour in availableHours" 
+                    :key="hour.value"
+                    :class="['hour-card', { 
+                      active: isHourSelected(hour.value),
+                      disabled: isHourDisabled(hour.value)
+                    }]"
+                    @click="toggleHour(hour.value)"
+                  >
+                    <div class="hour-icon">{{ hour.icon }}</div>
+                    <div class="hour-value">{{ hour.label }}</div>
+                  </div>
+                </div>
+                <div v-if="selectedHours.length > 0" class="hours-summary">
+                  <p class="hours-count">
+                    <strong>{{ selectedHours.length }}</strong> {{ selectedHours.length === 1 ? 'hora seleccionada' : 'horas seleccionadas' }}
+                  </p>
+                  <p class="time-range">{{ timeRange }}</p>
+                </div>
+                <div v-else-if="formData.fechaInicio" class="hours-hint">
+                  <p>💡 Haz clic en las horas que necesitas. Puedes seleccionar horas consecutivas o individuales.</p>
                 </div>
               </div>
 
@@ -103,7 +128,7 @@
                 <div class="info-icon">ℹ️</div>
                 <div>
                   <strong>Política de cancelación:</strong>
-                  <p>Puedes cancelar hasta 24h antes del inicio sin coste. Renovación automática mensual, cancelable con 7 días de antelación.</p>
+                  <p>Puedes cancelar hasta 24h antes del inicio sin coste.</p>
                 </div>
               </div>
             </div>
@@ -131,31 +156,37 @@
 
               <div v-if="formData.metodoPago === 'tarjeta'" class="card-form">
                 <div class="form-group">
-                  <label for="card-number">Número de tarjeta</label>
+                  <label for="card-number">Número de tarjeta *</label>
                   <input 
                     type="text" 
-                    id="card-number" 
+                    id="card-number"
+                    v-model="formData.cardNumber"
                     placeholder="1234 5678 9012 3456"
                     maxlength="19"
+                    required
                   />
                 </div>
                 <div class="form-row">
                   <div class="form-group">
-                    <label for="expiry">Fecha de caducidad</label>
+                    <label for="expiry">Fecha de caducidad *</label>
                     <input 
                       type="text" 
-                      id="expiry" 
+                      id="expiry"
+                      v-model="formData.cardExpiry"
                       placeholder="MM/AA"
                       maxlength="5"
+                      required
                     />
                   </div>
                   <div class="form-group">
-                    <label for="cvv">CVV</label>
+                    <label for="cvv">CVV *</label>
                     <input 
                       type="text" 
-                      id="cvv" 
+                      id="cvv"
+                      v-model="formData.cardCVV"
                       placeholder="123"
-                      maxlength="3"
+                      maxlength="4"
+                      required
                     />
                   </div>
                 </div>
@@ -206,13 +237,25 @@
                     <span class="icon">📏</span>
                     <span>{{ selectedSpace.size }}m²</span>
                   </div>
+                  <div v-if="formData.fechaInicio" class="info-item">
+                    <span class="icon">📅</span>
+                    <span>{{ formatDate(formData.fechaInicio) }}</span>
+                  </div>
+                  <div v-if="selectedHours.length > 0" class="info-item">
+                    <span class="icon">🕐</span>
+                    <span>{{ timeRange }}</span>
+                  </div>
                 </div>
               </div>
 
               <div class="price-breakdown">
                 <div class="price-row">
-                  <span>Precio base</span>
-                  <span>{{ selectedSpace?.price }}€/{{ selectedSpace?.period }}</span>
+                  <span>Precio por hora</span>
+                  <span>{{ selectedSpace?.price }}€/h</span>
+                </div>
+                <div class="price-row" v-if="selectedHours.length > 0">
+                  <span>Horas ({{ selectedHours.length }})</span>
+                  <span>{{ basePrice }}€</span>
                 </div>
                 <div class="price-row" v-if="discount > 0">
                   <span>Descuento ({{ discountPercentage }}%)</span>
@@ -240,8 +283,8 @@
                 <div>
                   <strong>¿Necesitas ayuda?</strong>
                   <p>Contacta con nosotros:<br>
-                  📞 +34 918 92 XX XX<br>
-                  ✉️ info@nexusaranjuez.es</p>
+                  📞 +34 918 123 456<br>
+                  ✉️ info@nexuscoworking.es</p>
                 </div>
               </div>
             </div>
@@ -257,7 +300,7 @@
             
             <div class="success-message">
               <p>Hemos enviado un email de confirmación a <strong>{{ formData.email }}</strong> con todos los detalles de tu reserva.</p>
-              <p>Recibirás las instrucciones de acceso 24 horas antes del inicio de tu reserva.</p>
+              <p>Reserva confirmada para el día <strong>{{ formatDate(formData.fechaInicio) }}</strong> de <strong>{{ timeRange }}</strong>.</p>
             </div>
 
             <div class="next-steps">
@@ -265,7 +308,7 @@
               <ol>
                 <li>Revisa el email de confirmación</li>
                 <li v-if="formData.metodoPago === 'transferencia'">Realiza la transferencia bancaria en las próximas 48h</li>
-                <li>Descarga tu código de acceso el día anterior</li>
+                <li>Llega 5 minutos antes de tu hora reservada</li>
                 <li>¡Disfruta de tu espacio en Nexus!</li>
               </ol>
             </div>
@@ -292,12 +335,34 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import HeaderNav from '../components/HeaderNav.vue'
-import FooterNav from '../components/FooterNav.vue'
+import HeaderNav from '@/components/HeaderNav.vue'
+import FooterNav from '@/components/FooterNav.vue'
 
 const route = useRoute()
+
+// Todas las horas posibles (8:00 - 21:00)
+const allHours = [
+  { value: 8, label: '08:00', icon: '🕗' },
+  { value: 9, label: '09:00', icon: '🕘' },
+  { value: 10, label: '10:00', icon: '🕙' },
+  { value: 11, label: '11:00', icon: '🕚' },
+  { value: 12, label: '12:00', icon: '🕛' },
+  { value: 13, label: '13:00', icon: '🕐' },
+  { value: 14, label: '14:00', icon: '🕑' },
+  { value: 15, label: '15:00', icon: '🕒' },
+  { value: 16, label: '16:00', icon: '🕓' },
+  { value: 17, label: '17:00', icon: '🕔' },
+  { value: 18, label: '18:00', icon: '🕕' },
+  { value: 19, label: '19:00', icon: '🕖' },
+  { value: 20, label: '20:00', icon: '🕗' },
+  { value: 21, label: '21:00', icon: '🕘' },
+]
+
+// Estado
+const selectedSpace = ref(null)
+const selectedHours = ref([])
 const reservationComplete = ref(false)
 const confirmationNumber = ref('')
 
@@ -306,223 +371,244 @@ const formData = ref({
   email: '',
   telefono: '',
   empresa: '',
-  mensaje: '',
   fechaInicio: '',
-  duracion: '1-mes',
+  mensaje: '',
   metodoPago: 'tarjeta',
-  acceptTerms: false
+  acceptTerms: false,
+  cardNumber: '',
+  cardExpiry: '',
+  cardCVV: ''
 })
 
-// Fecha mínima (hoy)
+// Datos de espacios
+const spaces = [
+  {
+    id: 1,
+    name: 'Escritorio Individual Classic',
+    type: 'Hot Desk',
+    image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80',
+    floor: 1,
+    capacity: 1,
+    size: 2,
+    price: 5,
+    features: ['WiFi 1Gbps', 'Café ilimitado', 'Taquilla']
+  },
+  {
+    id: 2,
+    name: 'Escritorio Individual Premium',
+    type: 'Dedicated Desk',
+    image: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=600&q=80',
+    floor: 3,
+    capacity: 1,
+    size: 4,
+    price: 8,
+    features: ['WiFi 1Gbps', 'Monitor 24"', 'Taquilla privada']
+  },
+  {
+    id: 3,
+    name: 'Mesa Colaborativa Nexus',
+    type: 'Coworking',
+    image: 'https://images.unsplash.com/photo-1556761175-4b46a572b786?w=600&q=80',
+    floor: 2,
+    capacity: 4,
+    size: 12,
+    price: 20,
+    features: ['WiFi 1Gbps', 'Pizarra', 'Ambiente dinámico']
+  },
+  {
+    id: 4,
+    name: 'Sala Reuniones Cervantes',
+    type: 'Sala Reuniones',
+    image: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=600&q=80',
+    floor: 2,
+    capacity: 6,
+    size: 20,
+    price: 35,
+    features: ['TV 55"', 'Videoconferencia', 'Pizarra digital']
+  },
+  {
+    id: 5,
+    name: 'Oficina Privada Quijote',
+    type: 'Oficina Privada',
+    image: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=600&q=80',
+    floor: 3,
+    capacity: 4,
+    size: 25,
+    price: 45,
+    features: ['Amueblada', 'Ventanas', 'Cerradura digital']
+  },
+  {
+    id: 6,
+    name: 'Sala Reuniones Biblioteca',
+    type: 'Sala Reuniones',
+    image: 'https://images.unsplash.com/photo-1431540015161-0bf868a2d407?w=600&q=80',
+    floor: 1,
+    capacity: 8,
+    size: 30,
+    price: 45,
+    features: ['Proyector', 'Sistema audio', 'Catering disponible']
+  },
+  {
+    id: 7,
+    name: 'Espacio Coworking Open',
+    type: 'Coworking',
+    image: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=600&q=80',
+    floor: 2,
+    capacity: 12,
+    size: 80,
+    price: 30,
+    features: ['WiFi', 'Café', 'Ambiente dinámico']
+  },
+  {
+    id: 8,
+    name: 'Cabina Individual Focus',
+    type: 'Phone Booth',
+    image: 'https://images.unsplash.com/photo-1497366412874-3415097a27e7?w=600&q=80',
+    floor: 1,
+    capacity: 1,
+    size: 2,
+    price: 8,
+    features: ['Insonorizada', 'Escritorio', 'Toma corriente']
+  },
+  {
+    id: 9,
+    name: 'Sala Brainstorming Ideas',
+    type: 'Sala Reuniones',
+    image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=600&q=80',
+    floor: 2,
+    capacity: 6,
+    size: 22,
+    price: 38,
+    features: ['Pizarras murales', 'Post-its', 'Ambiente creativo']
+  },
+  {
+    id: 10,
+    name: 'Oficina Premium Executive',
+    type: 'Oficina Privada',
+    image: 'https://images.unsplash.com/photo-1497366672149-e5e4b4d34eb3?w=600&q=80',
+    floor: 3,
+    capacity: 8,
+    size: 40,
+    price: 65,
+    features: ['Vistas', 'Mobiliario premium', 'Sala reuniones incluida']
+  },
+  {
+    id: 11,
+    name: 'Mesa Hot Desk Flexible',
+    type: 'Hot Desk',
+    image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=80',
+    floor: 1,
+    capacity: 1,
+    size: 2,
+    price: 6,
+    features: ['Acceso 24/7', 'WiFi', 'Café']
+  },
+  {
+    id: 12,
+    name: 'Sala Videoconferencia Pro',
+    type: 'Sala Reuniones',
+    image: 'https://images.unsplash.com/photo-1573167243872-43c6433b9d40?w=600&q=80',
+    floor: 3,
+    capacity: 4,
+    size: 18,
+    price: 50,
+    features: ['Cámara 4K', 'Micrófonos', 'Iluminación profesional']
+  },
+  {
+    id: 13,
+    name: 'Rincón Lectura Terraza',
+    type: 'Zona Relajación',
+    image: 'https://images.unsplash.com/photo-1521791055366-0d553872125f?w=600&q=80',
+    floor: 3,
+    capacity: 2,
+    size: 10,
+    price: 6,
+    features: ['Terraza', 'Wifi', 'Zona tranquila']
+  },
+  {
+    id: 14,
+    name: 'Sala Workshop Grande',
+    type: 'Sala Eventos',
+    image: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=600&q=80',
+    floor: 1,
+    capacity: 20,
+    size: 60,
+    price: 80,
+    features: ['Proyector', 'Sistema audio', 'Sillas modulares']
+  },
+  {
+    id: 15,
+    name: 'Zona Café Networking',
+    type: 'Zona Común',
+    image: 'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=600&q=80',
+    floor: 1,
+    capacity: 10,
+    size: 35,
+    price: 15,
+    features: ['Café premium', 'Sofás', 'Ambiente relajado']
+  }
+]
+
+// Computed
 const minDate = computed(() => {
   const today = new Date()
   return today.toISOString().split('T')[0]
 })
 
-// Datos de espacios (mismo array que en EspaciosView)
-const spaces = ref([
-  {
-    id: 1,
-    name: 'Escritorio Individual Classic',
-    type: 'Escritorio',
-    floor: 1,
-    capacity: 1,
-    size: 2,
-    price: 150,
-    period: 'mes',
-    image: 'https://images.unsplash.com/photo-1497366672149-e5e4b4d34eb3?w=600&q=80',
-    features: ['WiFi', 'Enchufe', 'Luz natural', 'Armario']
-  },
-  {
-    id: 2,
-    name: 'Escritorio Individual Premium',
-    type: 'Escritorio',
-    floor: 3,
-    capacity: 1,
-    size: 3,
-    price: 220,
-    period: 'mes',
-    image: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=600&q=80',
-    features: ['WiFi', 'Monitor 27"', 'Silla ergonómica', 'Luz natural']
-  },
-  {
-    id: 3,
-    name: 'Mesa Colaborativa Nexus',
-    type: 'Mesa compartida',
-    floor: 2,
-    capacity: 4,
-    size: 12,
-    price: 90,
-    period: 'mes',
-    image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=600&q=80',
-    features: ['WiFi', 'Café incluido', 'Zona común', 'Biblioteca']
-  },
-  {
-    id: 4,
-    name: 'Sala de Reuniones Cervantes',
-    type: 'Sala privada',
-    floor: 2,
-    capacity: 6,
-    size: 20,
-    price: 35,
-    period: 'hora',
-    image: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=600&q=80',
-    features: ['Pantalla 55"', 'Videoconferencia', 'Pizarra', 'Café incluido']
-  },
-  {
-    id: 5,
-    name: 'Oficina Privada Quijote',
-    type: 'Oficina',
-    floor: 3,
-    capacity: 4,
-    size: 25,
-    price: 850,
-    period: 'mes',
-    image: 'https://images.unsplash.com/photo-1497366858526-0766cadbe8fa?w=600&q=80',
-    features: ['Privado', 'WiFi dedicado', 'Armarios', 'Cerradura']
-  },
-  {
-    id: 6,
-    name: 'Sala de Reuniones Biblioteca',
-    type: 'Sala privada',
-    floor: 1,
-    capacity: 8,
-    size: 30,
-    price: 45,
-    period: 'hora',
-    image: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=600&q=80',
-    features: ['Pantalla 65"', 'Sistema audio', '8 sillas', 'Catering']
-  },
-  {
-    id: 7,
-    name: 'Espacio Coworking Open',
-    type: 'Espacio abierto',
-    floor: 2,
-    capacity: 12,
-    size: 80,
-    price: 12,
-    period: 'día',
-    image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80',
-    features: ['WiFi', 'Café gratis', 'Sofás', 'Terraza']
-  },
-  {
-    id: 8,
-    name: 'Cabina Individual Focus',
-    type: 'Cabina',
-    floor: 1,
-    capacity: 1,
-    size: 3,
-    price: 8,
-    period: 'hora',
-    image: 'https://images.unsplash.com/photo-1516455590571-18256e5bb9ff?w=600&q=80',
-    features: ['Insonorizada', 'WiFi', 'Escritorio', 'Iluminación']
-  },
-  {
-    id: 9,
-    name: 'Sala Brainstorming Ideas',
-    type: 'Sala creativa',
-    floor: 2,
-    capacity: 6,
-    size: 22,
-    price: 38,
-    period: 'hora',
-    image: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=600&q=80',
-    features: ['Pizarras', 'Post-its', 'Rotuladores', 'Mesas modulares']
-  },
-  {
-    id: 10,
-    name: 'Oficina Premium Executive',
-    type: 'Oficina',
-    floor: 3,
-    capacity: 8,
-    size: 45,
-    price: 1400,
-    period: 'mes',
-    image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=80',
-    features: ['Terraza', 'WiFi dedicado', 'Mobiliario premium', 'Zona reuniones']
-  },
-  {
-    id: 11,
-    name: 'Mesa Hot Desk Flexible',
-    type: 'Hot desk',
-    floor: 1,
-    capacity: 1,
-    size: 2,
-    price: 180,
-    period: 'mes',
-    image: 'https://images.unsplash.com/photo-1497215842964-222b430dc094?w=600&q=80',
-    features: ['Flexible', 'WiFi', 'Acceso 24/7', 'Taquilla']
-  },
-  {
-    id: 12,
-    name: 'Sala Videoconferencia Pro',
-    type: 'Sala técnica',
-    floor: 3,
-    capacity: 4,
-    size: 18,
-    price: 50,
-    period: 'hora',
-    image: 'https://images.unsplash.com/photo-1582653291997-079a1c04e5a1?w=600&q=80',
-    features: ['Cámara 4K', 'Iluminación LED', 'Fondo verde', 'Micrófono']
-  },
-  {
-    id: 13,
-    name: 'Rincón Lectura Terraza',
-    type: 'Espacio lectura',
-    floor: 3,
-    capacity: 2,
-    size: 8,
-    price: 6,
-    period: 'hora',
-    image: 'https://images.unsplash.com/photo-1521587765099-8835e7201186?w=600&q=80',
-    features: ['Terraza', 'Sillones', 'Vistas', 'Plantas']
-  },
-  {
-    id: 14,
-    name: 'Sala Workshop Grande',
-    type: 'Sala eventos',
-    floor: 1,
-    capacity: 20,
-    size: 60,
-    price: 80,
-    period: 'hora',
-    image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80',
-    features: ['Proyector', 'Sillas apilables', 'Sistema audio', 'Catering']
-  },
-  {
-    id: 15,
-    name: 'Zona Café Networking',
-    type: 'Espacio social',
-    floor: 1,
-    capacity: 10,
-    size: 35,
-    price: 8,
-    period: 'día',
-    image: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=600&q=80',
-    features: ['Café incluido', 'Sofás', 'Mesas altas', 'WiFi']
-  }
-])
+// Horas disponibles según el día de la semana
+const availableHours = computed(() => {
+  if (!formData.value.fechaInicio) return allHours
 
-const selectedSpace = computed(() => {
-  const spaceId = parseInt(route.params.id)
-  return spaces.value.find(s => s.id === spaceId)
+  const date = new Date(formData.value.fechaInicio)
+  const dayOfWeek = date.getDay() // 0=Domingo, 1=Lunes, ..., 6=Sábado
+
+  if (dayOfWeek === 0) {
+    // Domingo: 10:00 - 15:00 (última hora reservable: 14:00)
+    return allHours.filter(h => h.value >= 10 && h.value <= 14)
+  } else if (dayOfWeek === 6) {
+    // Sábado: 9:00 - 20:00 (última hora reservable: 19:00)
+    return allHours.filter(h => h.value >= 9 && h.value <= 19)
+  } else {
+    // Lunes - Viernes: 8:00 - 21:00 (última hora reservable: 20:00)
+    return allHours.filter(h => h.value >= 8 && h.value <= 20)
+  }
+})
+
+// Mensaje de horario según el día
+const scheduleMessage = computed(() => {
+  if (!formData.value.fechaInicio) return 'Selecciona una fecha para ver las horas disponibles'
+
+  const date = new Date(formData.value.fechaInicio)
+  const dayOfWeek = date.getDay()
+
+  if (dayOfWeek === 0) {
+    return 'Domingo: 10:00 - 15:00'
+  } else if (dayOfWeek === 6) {
+    return 'Sábado: 9:00 - 20:00'
+  } else {
+    return 'Lunes - Viernes: 8:00 - 21:00'
+  }
+})
+
+const basePrice = computed(() => {
+  if (!selectedSpace.value || selectedHours.value.length === 0) return 0
+  return selectedSpace.value.price * selectedHours.value.length
 })
 
 const discountPercentage = computed(() => {
-  if (formData.value.duracion === '6-meses') return 5
-  if (formData.value.duracion === '12-meses') return 10
+  const hours = selectedHours.value.length
+  if (hours >= 8) return 15
+  if (hours >= 6) return 10
+  if (hours >= 4) return 5
   return 0
 })
 
 const discount = computed(() => {
-  if (!selectedSpace.value) return 0
-  const basePrice = selectedSpace.value.price
-  return Math.round((basePrice * discountPercentage.value) / 100)
+  return Math.round((basePrice.value * discountPercentage.value) / 100)
 })
 
 const subtotal = computed(() => {
-  if (!selectedSpace.value) return 0
-  return selectedSpace.value.price - discount.value
+  return basePrice.value - discount.value
 })
 
 const vat = computed(() => {
@@ -533,38 +619,159 @@ const totalPrice = computed(() => {
   return subtotal.value + vat.value
 })
 
-const isFormValid = computed(() => {
-  return (
-    formData.value.nombre.trim() !== '' &&
-    formData.value.email.trim() !== '' &&
-    formData.value.telefono.trim() !== '' &&
-    formData.value.fechaInicio !== '' &&
-    formData.value.acceptTerms
-  )
+const timeRange = computed(() => {
+  if (selectedHours.value.length === 0) return ''
+  
+  const sorted = [...selectedHours.value].sort((a, b) => a - b)
+  const start = sorted[0]
+  const end = sorted[sorted.length - 1]
+  
+  return `${String(start).padStart(2, '0')}:00 - ${String(end + 1).padStart(2, '0')}:00`
 })
 
+const isFormValid = computed(() => {
+  const basicValid = formData.value.nombre &&
+         formData.value.email &&
+         formData.value.telefono &&
+         formData.value.fechaInicio &&
+         selectedHours.value.length > 0 &&
+         formData.value.acceptTerms
+
+  // Si el método de pago es tarjeta, validar campos de tarjeta
+  if (formData.value.metodoPago === 'tarjeta') {
+    return basicValid && 
+           formData.value.cardNumber && 
+           formData.value.cardExpiry && 
+           formData.value.cardCVV
+  }
+
+  return basicValid
+})
+
+// Funciones
+const toggleHour = (hour) => {
+  const index = selectedHours.value.indexOf(hour)
+  if (index > -1) {
+    selectedHours.value.splice(index, 1)
+  } else {
+    selectedHours.value.push(hour)
+  }
+}
+
+const isHourSelected = (hour) => {
+  return selectedHours.value.includes(hour)
+}
+
+const isHourDisabled = (hour) => {
+  // Por ahora no hay horas deshabilitadas, pero se puede implementar
+  return false
+}
+
+const formatDate = (dateString) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return date.toLocaleDateString('es-ES', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  })
+}
+
 const completeReservation = () => {
-  if (!isFormValid.value) {
-    alert('Por favor, completa todos los campos obligatorios')
+  // Validación de campos básicos
+  if (!formData.value.nombre.trim()) {
+    alert('❌ Por favor, introduce tu nombre completo')
     return
   }
-  
-  // Generar número de confirmación
-  confirmationNumber.value = Math.floor(100000 + Math.random() * 900000).toString()
+
+  if (!formData.value.email.trim()) {
+    alert('❌ Por favor, introduce tu email')
+    return
+  }
+
+  // Validación de email
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(formData.value.email)) {
+    alert('❌ Por favor, introduce un email válido')
+    return
+  }
+
+  if (!formData.value.telefono.trim()) {
+    alert('❌ Por favor, introduce tu teléfono')
+    return
+  }
+
+  if (!formData.value.fechaInicio) {
+    alert('❌ Por favor, selecciona una fecha para tu reserva')
+    return
+  }
+
+  if (selectedHours.value.length === 0) {
+    alert('❌ Por favor, selecciona al menos una hora')
+    return
+  }
+
+  // Validación de método de pago
+  if (formData.value.metodoPago === 'tarjeta') {
+    if (!formData.value.cardNumber.trim()) {
+      alert('❌ Por favor, introduce el número de tu tarjeta')
+      return
+    }
+
+    if (formData.value.cardNumber.replace(/\s/g, '').length < 13) {
+      alert('❌ El número de tarjeta debe tener al menos 13 dígitos')
+      return
+    }
+
+    if (!formData.value.cardExpiry.trim()) {
+      alert('❌ Por favor, introduce la fecha de caducidad de tu tarjeta')
+      return
+    }
+
+    if (!formData.value.cardCVV.trim()) {
+      alert('❌ Por favor, introduce el CVV de tu tarjeta')
+      return
+    }
+
+    if (formData.value.cardCVV.length < 3) {
+      alert('❌ El CVV debe tener al menos 3 dígitos')
+      return
+    }
+  }
+
+  if (!formData.value.acceptTerms) {
+    alert('❌ Debes aceptar los términos y condiciones para continuar')
+    return
+  }
+
+  // Si todo está bien, generar número de confirmación y mostrar éxito
+  confirmationNumber.value = Math.random().toString(36).substring(2, 8).toUpperCase()
   
   // Mostrar confirmación
   reservationComplete.value = true
   
-  // Scroll to top
+  // Scroll al inicio
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
+// Limpiar horas seleccionadas si cambia la fecha y algunas horas ya no están disponibles
+const cleanInvalidHours = () => {
+  if (!formData.value.fechaInicio) return
+  
+  const validHourValues = availableHours.value.map(h => h.value)
+  selectedHours.value = selectedHours.value.filter(hour => validHourValues.includes(hour))
+}
+
+// Montar
 onMounted(() => {
-  // Verificar que el espacio existe
-  if (!selectedSpace.value) {
-    // Redirigir a espacios si no se encuentra el espacio
-    // router.push('/espacios')
-  }
+  const spaceId = parseInt(route.params.id)
+  selectedSpace.value = spaces.find(s => s.id === spaceId)
+})
+
+// Watch para limpiar horas cuando cambia la fecha
+watch(() => formData.value.fechaInicio, () => {
+  cleanInvalidHours()
 })
 </script>
 
@@ -575,25 +782,24 @@ onMounted(() => {
 }
 
 .page-header {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 4rem 0 3rem;
+  padding: 3rem 0;
   text-align: center;
 }
 
 .page-header h1 {
   font-size: 2.5rem;
-  margin-bottom: 0.75rem;
-  font-weight: 700;
+  margin-bottom: 0.5rem;
 }
 
 .page-header p {
-  font-size: 1.2rem;
-  opacity: 0.9;
+  font-size: 1.1rem;
+  opacity: 0.95;
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 2rem;
 }
@@ -604,9 +810,8 @@ onMounted(() => {
 
 .checkout-layout {
   display: grid;
-  grid-template-columns: 1fr 400px;
+  grid-template-columns: 1fr 420px;
   gap: 2rem;
-  align-items: start;
 }
 
 /* Formulario */
@@ -618,13 +823,13 @@ onMounted(() => {
 
 .section-card {
   background: white;
-  padding: 2.5rem;
+  padding: 2rem;
   border-radius: 15px;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
 }
 
 .section-card h2 {
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   margin-bottom: 1.5rem;
   color: #1a1a2e;
   padding-bottom: 1rem;
@@ -633,27 +838,27 @@ onMounted(() => {
 
 .form-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  margin-bottom: 1.5rem;
 }
 
 .form-group label {
-  font-weight: 600;
-  color: #333;
   margin-bottom: 0.5rem;
+  color: #555;
+  font-weight: 500;
   font-size: 0.95rem;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
-  padding: 0.9rem;
+  padding: 0.875rem;
   border: 2px solid #e0e0e0;
   border-radius: 10px;
   font-size: 1rem;
@@ -666,11 +871,114 @@ onMounted(() => {
 .form-group textarea:focus {
   outline: none;
   border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .form-group textarea {
   resize: vertical;
-  min-height: 100px;
+}
+
+/* Selector de Horas */
+.hours-selector {
+  margin-top: 1.5rem;
+}
+
+.hours-label {
+  display: block;
+  margin-bottom: 1rem;
+  color: #555;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.schedule-info {
+  color: #667eea;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.hours-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.hour-card {
+  background: white;
+  border: 3px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  user-select: none;
+}
+
+.hour-card:hover:not(.disabled) {
+  transform: translateY(-3px);
+  border-color: #667eea;
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+}
+
+.hour-card.active {
+  border-color: #667eea;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+.hour-card.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.hour-icon {
+  font-size: 1.8rem;
+  margin-bottom: 0.3rem;
+}
+
+.hour-value {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.hours-summary {
+  background: #f0f4ff;
+  padding: 1rem;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.hours-count {
+  font-size: 1.1rem;
+  color: #1a1a2e;
+  margin-bottom: 0.3rem;
+}
+
+.hours-count strong {
+  color: #667eea;
+  font-size: 1.3rem;
+}
+
+.time-range {
+  color: #667eea;
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+.hours-hint {
+  background: #fff9e6;
+  padding: 1rem;
+  border-radius: 10px;
+  border-left: 4px solid #ffd700;
+}
+
+.hours-hint p {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 0;
 }
 
 .info-box {
@@ -700,44 +1008,36 @@ onMounted(() => {
   margin: 0;
 }
 
-/* Métodos de pago */
+/* Métodos de Pago */
 .payment-methods {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
 
 .payment-method {
-  display: flex;
-  align-items: center;
-  padding: 1.25rem;
-  border: 2px solid #e0e0e0;
-  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.payment-method:hover {
-  border-color: #667eea;
-}
-
-.payment-method.active {
-  border-color: #667eea;
-  background: #f0f4ff;
 }
 
 .payment-method input[type="radio"] {
-  margin-right: 1rem;
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
+  display: none;
 }
 
 .method-content {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.payment-method.active .method-content {
+  border-color: #667eea;
+  background: #f0f4ff;
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
 }
 
 .method-icon {
@@ -745,8 +1045,8 @@ onMounted(() => {
 }
 
 .method-name {
-  font-weight: 600;
-  color: #333;
+  font-weight: 500;
+  color: #1a1a2e;
 }
 
 .card-form,
@@ -757,80 +1057,74 @@ onMounted(() => {
 }
 
 .transfer-info p {
-  color: #666;
+  color: #555;
   line-height: 1.6;
-  background: #f8f9fa;
-  padding: 1rem;
-  border-radius: 10px;
 }
 
 .terms-check {
-  margin-top: 1.5rem;
+  margin: 1.5rem 0;
 }
 
 .terms-check label {
   display: flex;
-  align-items: start;
+  align-items: center;
   gap: 0.75rem;
   cursor: pointer;
 }
 
 .terms-check input[type="checkbox"] {
-  margin-top: 0.25rem;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   cursor: pointer;
-  flex-shrink: 0;
-}
-
-.terms-check span {
-  color: #555;
-  line-height: 1.6;
-  font-size: 0.95rem;
 }
 
 .terms-check a {
   color: #667eea;
+  text-decoration: none;
+}
+
+.terms-check a:hover {
   text-decoration: underline;
 }
 
 .submit-button {
   width: 100%;
-  padding: 1.25rem;
+  padding: 1rem 2rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  border-radius: 50px;
+  border-radius: 10px;
   font-size: 1.1rem;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  margin-top: 2rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
-  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+  gap: 0.5rem;
+  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
 }
 
 .submit-button:hover:not(:disabled) {
   transform: translateY(-3px);
-  box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
 }
 
 .submit-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
 }
 
 .button-icon {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
 }
 
-/* Resumen */
+/* Resumen Sticky */
 .summary-section {
   position: sticky;
   top: 100px;
+  height: fit-content;
 }
 
 .summary-card {
@@ -1111,6 +1405,10 @@ onMounted(() => {
   .summary-section {
     position: static;
   }
+
+  .hours-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 @media (max-width: 768px) {
@@ -1128,6 +1426,20 @@ onMounted(() => {
   
   .action-buttons {
     flex-direction: column;
+  }
+
+  .payment-methods {
+    grid-template-columns: 1fr;
+  }
+
+  .hours-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .hours-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>

@@ -144,8 +144,8 @@ const spaces = ref([
     floor: 1,
     capacity: 1,
     size: 2,
-    price: 150,
-    period: 'mes',
+    price: 5,
+    period: 'hora',
     features: ['WiFi 1Gbps', 'Café ilimitado', 'Taquilla']
   },
   {
@@ -157,8 +157,8 @@ const spaces = ref([
     floor: 3,
     capacity: 1,
     size: 4,
-    price: 220,
-    period: 'mes',
+    price: 8,
+    period: 'hora',
     features: ['WiFi 1Gbps', 'Monitor 24"', 'Taquilla privada']
   },
   {
@@ -170,8 +170,8 @@ const spaces = ref([
     floor: 2,
     capacity: 4,
     size: 12,
-    price: 90,
-    period: 'mes',
+    price: 20,
+    period: 'hora',
     features: ['WiFi 1Gbps', 'Pizarra', 'Ambiente dinámico']
   },
   {
@@ -196,8 +196,8 @@ const spaces = ref([
     floor: 3,
     capacity: 4,
     size: 25,
-    price: 850,
-    period: 'mes',
+    price: 45,
+    period: 'hora',
     features: ['Amueblada', 'Ventanas', 'Cerradura digital']
   },
   {
@@ -222,8 +222,8 @@ const spaces = ref([
     floor: 2,
     capacity: 12,
     size: 80,
-    price: 12,
-    period: 'día',
+    price: 30,
+    period: 'hora',
     features: ['WiFi', 'Café', 'Ambiente dinámico']
   },
   {
@@ -261,8 +261,8 @@ const spaces = ref([
     floor: 3,
     capacity: 8,
     size: 40,
-    price: 1400,
-    period: 'mes',
+    price: 65,
+    period: 'hora',
     features: ['Vistas', 'Mobiliario premium', 'Sala reuniones incluida']
   },
   {
@@ -274,8 +274,8 @@ const spaces = ref([
     floor: 1,
     capacity: 1,
     size: 2,
-    price: 180,
-    period: 'mes',
+    price: 6,
+    period: 'hora',
     features: ['Acceso 24/7', 'WiFi', 'Café']
   },
   {
@@ -326,8 +326,8 @@ const spaces = ref([
     floor: 1,
     capacity: 10,
     size: 35,
-    price: 8,
-    period: 'día',
+    price: 15,
+    period: 'hora',
     features: ['Café premium', 'Sofás', 'Ambiente relajado']
   }
 ])
