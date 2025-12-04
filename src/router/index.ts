@@ -6,19 +6,19 @@ const router = createRouter({
     {
       path: '/',
       name: 'landing',
-      component: () => import('../views/LandingView.vue'),
+      component: () => import('@/views/LandingView.vue'),
       meta: { title: 'Nexus - Librería y Coworking en Aranjuez' }
     },
     {
       path: '/espacios',
       name: 'espacios',
-      component: () => import('../views/EspaciosView.vue'),
+      component: () => import('@/views/EspaciosView.vue'),
       meta: { title: 'Espacios - Nexus Coworking' }
     },
     {
       path: '/checkout/:id',
       name: 'checkout',
-      component: () => import('../views/CheckoutView.vue'),
+      component: () => import('@/views/CheckoutView.vue'),
       meta: { title: 'Confirmar Reserva - Nexus' }
     }
   ],

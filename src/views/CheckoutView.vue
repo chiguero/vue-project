@@ -345,7 +345,6 @@ import FooterNav from '@/components/FooterNav.vue'
 
 const route = useRoute()
 
-// Todas las horas posibles (8:00 - 21:00)
 const allHours = [
   { value: 8, label: '08:00', icon: '🕗' },
   { value: 9, label: '09:00', icon: '🕘' },
@@ -363,7 +362,6 @@ const allHours = [
   { value: 21, label: '21:00', icon: '🕘' },
 ]
 
-// Estado
 const selectedSpace = ref(null)
 const selectedHours = ref([])
 const reservationComplete = ref(false)
@@ -383,7 +381,6 @@ const formData = ref({
   cardCVV: ''
 })
 
-// Datos de espacios
 const spaces = [
   {
     id: 1,
@@ -413,7 +410,7 @@ const spaces = [
     type: 'Coworking',
     image: 'https://images.unsplash.com/photo-1556761175-4b46a572b786?w=600&q=80',
     floor: 2,
-    capacity: 4,
+    capacity: 20,
     size: 12,
     price: 20,
     features: ['WiFi 1Gbps', 'Pizarra', 'Ambiente dinámico']
@@ -497,17 +494,6 @@ const spaces = [
   },
   {
     id: 11,
-    name: 'Mesa Hot Desk Flexible',
-    type: 'Hot Desk',
-    image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=80',
-    floor: 1,
-    capacity: 1,
-    size: 2,
-    price: 6,
-    features: ['Acceso 24/7', 'WiFi', 'Café']
-  },
-  {
-    id: 12,
     name: 'Sala Videoconferencia Pro',
     type: 'Sala Reuniones',
     image: 'https://images.unsplash.com/photo-1573167243872-43c6433b9d40?w=600&q=80',
@@ -518,18 +504,18 @@ const spaces = [
     features: ['Cámara 4K', 'Micrófonos', 'Iluminación profesional']
   },
   {
-    id: 13,
+    id: 12,
     name: 'Rincón Lectura Terraza',
     type: 'Zona Relajación',
     image: 'https://images.unsplash.com/photo-1521791055366-0d553872125f?w=600&q=80',
     floor: 3,
-    capacity: 2,
+    capacity: 14,
     size: 10,
     price: 6,
     features: ['Terraza', 'Wifi', 'Zona tranquila']
   },
   {
-    id: 14,
+    id: 13,
     name: 'Sala Workshop Grande',
     type: 'Sala Eventos',
     image: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=600&q=80',
@@ -540,7 +526,7 @@ const spaces = [
     features: ['Proyector', 'Sistema audio', 'Sillas modulares']
   },
   {
-    id: 15,
+    id: 14,
     name: 'Zona Café Networking',
     type: 'Zona Común',
     image: 'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=600&q=80',
@@ -552,32 +538,26 @@ const spaces = [
   }
 ]
 
-// Computed
 const minDate = computed(() => {
   const today = new Date()
   return today.toISOString().split('T')[0]
 })
 
-// Horas disponibles según el día de la semana
 const availableHours = computed(() => {
   if (!formData.value.fechaInicio) return allHours
 
   const date = new Date(formData.value.fechaInicio)
-  const dayOfWeek = date.getDay() // 0=Domingo, 1=Lunes, ..., 6=Sábado
+  const dayOfWeek = date.getDay()
 
   if (dayOfWeek === 0) {
-    // Domingo: 10:00 - 15:00 (última hora reservable: 14:00)
     return allHours.filter(h => h.value >= 10 && h.value <= 14)
   } else if (dayOfWeek === 6) {
-    // Sábado: 9:00 - 20:00 (última hora reservable: 19:00)
     return allHours.filter(h => h.value >= 9 && h.value <= 19)
   } else {
-    // Lunes - Viernes: 8:00 - 21:00 (última hora reservable: 20:00)
     return allHours.filter(h => h.value >= 8 && h.value <= 20)
   }
 })
 
-// Mensaje de horario según el día
 const scheduleMessage = computed(() => {
   if (!formData.value.fechaInicio) return 'Selecciona una fecha para ver las horas disponibles'
 
@@ -640,7 +620,6 @@ const isFormValid = computed(() => {
          selectedHours.value.length > 0 &&
          formData.value.acceptTerms
 
-  // Si el método de pago es tarjeta, validar campos de tarjeta
   if (formData.value.metodoPago === 'tarjeta') {
     return basicValid && 
            formData.value.cardNumber && 
@@ -651,7 +630,6 @@ const isFormValid = computed(() => {
   return basicValid
 })
 
-// Funciones
 const toggleHour = (hour) => {
   const index = selectedHours.value.indexOf(hour)
   if (index > -1) {
@@ -666,7 +644,6 @@ const isHourSelected = (hour) => {
 }
 
 const isHourDisabled = (hour) => {
-  // Por ahora no hay horas deshabilitadas, pero se puede implementar
   return false
 }
 
@@ -682,7 +659,6 @@ const formatDate = (dateString) => {
 }
 
 const completeReservation = () => {
-  // Validación de campos básicos
   if (!formData.value.nombre.trim()) {
     alert('❌ Por favor, introduce tu nombre completo')
     return
@@ -693,7 +669,6 @@ const completeReservation = () => {
     return
   }
 
-  // Validación de email
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!emailRegex.test(formData.value.email)) {
     alert('❌ Por favor, introduce un email válido')
@@ -715,7 +690,6 @@ const completeReservation = () => {
     return
   }
 
-  // Validación de método de pago
   if (formData.value.metodoPago === 'tarjeta') {
     if (!formData.value.cardNumber.trim()) {
       alert('❌ Por favor, introduce el número de tu tarjeta')
@@ -732,7 +706,6 @@ const completeReservation = () => {
       return
     }
 
-    // Validar formato MM/AA
     const expiryRegex = /^(0[1-9]|1[0-2])\/([0-9]{2})$/
     if (!expiryRegex.test(formData.value.cardExpiry)) {
       alert('❌ La fecha de caducidad debe tener el formato MM/AA (ejemplo: 12/25)')
@@ -755,19 +728,13 @@ const completeReservation = () => {
     return
   }
 
-  // Si todo está bien, generar número de confirmación y mostrar éxito
   confirmationNumber.value = Math.random().toString(36).substring(2, 8).toUpperCase()
-  
-  // Mostrar confirmación
   reservationComplete.value = true
-  
-  // Scroll al inicio
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-// Formatear automáticamente la fecha de caducidad
 const formatCardExpiry = (event) => {
-  let value = event.target.value.replace(/\D/g, '') // Solo números
+  let value = event.target.value.replace(/\D/g, '')
   
   if (value.length >= 2) {
     value = value.substring(0, 2) + '/' + value.substring(2, 4)
@@ -776,11 +743,9 @@ const formatCardExpiry = (event) => {
   formData.value.cardExpiry = value
 }
 
-// Formatear número de tarjeta con espacios
 const formatCardNumber = (event) => {
-  let value = event.target.value.replace(/\s/g, '').replace(/\D/g, '') // Solo números
+  let value = event.target.value.replace(/\s/g, '').replace(/\D/g, '')
   
-  // Añadir espacios cada 4 dígitos
   const parts = []
   for (let i = 0; i < value.length; i += 4) {
     parts.push(value.substring(i, i + 4))
@@ -789,12 +754,10 @@ const formatCardNumber = (event) => {
   formData.value.cardNumber = parts.join(' ')
 }
 
-// Solo permitir números en CVV
 const formatCVV = (event) => {
   formData.value.cardCVV = event.target.value.replace(/\D/g, '')
 }
 
-// Limpiar horas seleccionadas si cambia la fecha y algunas horas ya no están disponibles
 const cleanInvalidHours = () => {
   if (!formData.value.fechaInicio) return
   
@@ -802,13 +765,11 @@ const cleanInvalidHours = () => {
   selectedHours.value = selectedHours.value.filter(hour => validHourValues.includes(hour))
 }
 
-// Montar
 onMounted(() => {
   const spaceId = parseInt(route.params.id)
   selectedSpace.value = spaces.find(s => s.id === spaceId)
 })
 
-// Watch para limpiar horas cuando cambia la fecha
 watch(() => formData.value.fechaInicio, () => {
   cleanInvalidHours()
 })
@@ -853,7 +814,6 @@ watch(() => formData.value.fechaInicio, () => {
   gap: 2rem;
 }
 
-/* Formulario */
 .form-section {
   display: flex;
   flex-direction: column;
@@ -917,7 +877,6 @@ watch(() => formData.value.fechaInicio, () => {
   resize: vertical;
 }
 
-/* Selector de Horas */
 .hours-selector {
   margin-top: 1.5rem;
 }
@@ -1047,7 +1006,6 @@ watch(() => formData.value.fechaInicio, () => {
   margin: 0;
 }
 
-/* Métodos de Pago */
 .payment-methods {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -1159,7 +1117,6 @@ watch(() => formData.value.fechaInicio, () => {
   font-size: 1.2rem;
 }
 
-/* Resumen Sticky */
 .summary-section {
   position: sticky;
   top: 100px;
@@ -1300,7 +1257,6 @@ watch(() => formData.value.fechaInicio, () => {
   margin: 0;
 }
 
-/* Confirmación */
 .confirmation-success {
   max-width: 700px;
   margin: 0 auto;
