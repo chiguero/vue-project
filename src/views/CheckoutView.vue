@@ -160,7 +160,8 @@
                   <input 
                     type="text" 
                     id="card-number"
-                    v-model="formData.cardNumber"
+                    :value="formData.cardNumber"
+                    @input="formatCardNumber"
                     placeholder="1234 5678 9012 3456"
                     maxlength="19"
                     required
@@ -172,7 +173,8 @@
                     <input 
                       type="text" 
                       id="expiry"
-                      v-model="formData.cardExpiry"
+                      :value="formData.cardExpiry"
+                      @input="formatCardExpiry"
                       placeholder="MM/AA"
                       maxlength="5"
                       required
@@ -183,7 +185,8 @@
                     <input 
                       type="text" 
                       id="cvv"
-                      v-model="formData.cardCVV"
+                      :value="formData.cardCVV"
+                      @input="formatCVV"
                       placeholder="123"
                       maxlength="4"
                       required
@@ -729,6 +732,13 @@ const completeReservation = () => {
       return
     }
 
+    // Validar formato MM/AA
+    const expiryRegex = /^(0[1-9]|1[0-2])\/([0-9]{2})$/
+    if (!expiryRegex.test(formData.value.cardExpiry)) {
+      alert('❌ La fecha de caducidad debe tener el formato MM/AA (ejemplo: 12/25)')
+      return
+    }
+
     if (!formData.value.cardCVV.trim()) {
       alert('❌ Por favor, introduce el CVV de tu tarjeta')
       return
@@ -753,6 +763,35 @@ const completeReservation = () => {
   
   // Scroll al inicio
   window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+// Formatear automáticamente la fecha de caducidad
+const formatCardExpiry = (event) => {
+  let value = event.target.value.replace(/\D/g, '') // Solo números
+  
+  if (value.length >= 2) {
+    value = value.substring(0, 2) + '/' + value.substring(2, 4)
+  }
+  
+  formData.value.cardExpiry = value
+}
+
+// Formatear número de tarjeta con espacios
+const formatCardNumber = (event) => {
+  let value = event.target.value.replace(/\s/g, '').replace(/\D/g, '') // Solo números
+  
+  // Añadir espacios cada 4 dígitos
+  const parts = []
+  for (let i = 0; i < value.length; i += 4) {
+    parts.push(value.substring(i, i + 4))
+  }
+  
+  formData.value.cardNumber = parts.join(' ')
+}
+
+// Solo permitir números en CVV
+const formatCVV = (event) => {
+  formData.value.cardCVV = event.target.value.replace(/\D/g, '')
 }
 
 // Limpiar horas seleccionadas si cambia la fecha y algunas horas ya no están disponibles
