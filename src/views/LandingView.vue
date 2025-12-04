@@ -6,7 +6,7 @@
     <section class="hero">
       <div class="hero-overlay"></div>
       <img 
-        src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=1600&q=80" 
+        src="@/assets/zona-entrada.jpg" 
         alt="Nexus Coworking" 
         class="hero-image"
       />
@@ -25,7 +25,7 @@
         <div class="about-grid">
           <div class="about-image">
             <img 
-              src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=600&q=80" 
+              src="@/assets/zona-oficinas.jpg" 
               alt="Interior Nexus"
             />
           </div>
@@ -105,7 +105,7 @@
         <div class="gallery-grid">
           <div class="gallery-item">
             <img 
-              src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80" 
+              src="@/assets/zona-entrada.jpg" 
               alt="Área de coworking"
             />
             <div class="gallery-overlay">
@@ -114,7 +114,7 @@
           </div>
           <div class="gallery-item">
             <img 
-              src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=600&q=80" 
+              src="@/assets/sala-reuniones-cervantes.jpg" 
               alt="Sala de reuniones"
             />
             <div class="gallery-overlay">
@@ -123,7 +123,7 @@
           </div>
           <div class="gallery-item">
             <img 
-              src="https://images.unsplash.com/photo-1521791055366-0d553872125f?w=600&q=80" 
+              src="@/assets/zona-relax.jpg" 
               alt="Zona de relajación"
             />
             <div class="gallery-overlay">
@@ -132,7 +132,7 @@
           </div>
           <div class="gallery-item">
             <img 
-              src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=600&q=80" 
+              src="@/assets/zona-libreria.jpg" 
               alt="Librería"
             />
             <div class="gallery-overlay">
@@ -141,7 +141,7 @@
           </div>
           <div class="gallery-item">
             <img 
-              src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=600&q=80" 
+              src="@/assets/zona-oficinas.jpg" 
               alt="Oficinas privadas"
             />
             <div class="gallery-overlay">
